@@ -7,6 +7,13 @@
 #include <sstream>
 #include <iterator>
 #include <vector>
+#include <map>
+
+std::map<std::string, std::string> activeSessions;
+
+std::string generateSessionToken() {
+    return std::to_string(rand());
+}
 
 void handle_client(int client_socket) {
     char buffer[1024] = {0};
@@ -20,17 +27,28 @@ void handle_client(int client_socket) {
 
     if (!tokens.empty()) {
         if (tokens[0] == "LOGIN") {
-            response = "LOGIN_SUCCESS";
-        } else if (tokens[0] == "LOGOUT") {
-            response = "LOGOUT_SUCCESS";
-        } else if (tokens[0] == "ADD_EVENT") {
-            response = "EVENT_ADDED";
-        } else if (tokens[0] == "DELETE_EVENT") {
-            response = "EVENT_DELETED";
-        } else if (tokens[0] == "LIST_EVENTS") {
-            response = "EVENT_LIST";
+            std::string userId = "1234"; 
+            std::string newToken = generateSessionToken();
+            activeSessions[newToken] = userId;
+            response = "LOGIN_SUCCESS " + newToken;
+            
         } else {
-            response = "UNKNOWN_COMMAND";
+            if (activeSessions.find(tokens[0]) != activeSessions.end()) {
+                if (tokens[1] == "LOGOUT") {
+                    activeSessions.erase(tokens[0]);
+                    response = "LOGOUT_SUCCESS";
+                } else if (tokens[1] == "ADD_EVENT") {
+                    response = "EVENT_ADDED";
+                } else if (tokens[1] == "DELETE_EVENT") {
+                    response = "EVENT_DELETED";
+                } else if (tokens[1] == "LIST_EVENTS") {
+                    response = "EVENT_LIST";
+                } else {
+                    response = "UNKNOWN_COMMAND";
+                }
+            } else {
+                response = "NOT_AUTHENTICATED";
+            }
         }
     } else {
         response = "INVALID_REQUEST";
