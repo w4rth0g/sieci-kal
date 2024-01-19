@@ -16,68 +16,82 @@ std::string generateSessionToken() {
     return std::to_string(rand());
 }
 
+void responseF(std::string resp, int client_socket) {
+    send(client_socket, resp.c_str(), resp.size(), 0);
+    close(client_socket);
+}
+
+std::string findSessionTokenByUserId(const std::string& userId) {
+    for (const auto& pair : activeSessions) {
+        if (pair.second == userId) {
+            return pair.first;
+        }
+    }
+    return "";
+}
+
 void handle_client(int client_socket) {
     char buffer[1024] = {0};
     read(client_socket, buffer, 1024);
     std::string request = std::string(buffer);
-    std::string response;
 
     std::istringstream iss(request);
     std::vector<std::string> tokens(std::istream_iterator<std::string>{iss},
                                     std::istream_iterator<std::string>{});
 
-    if (!tokens.empty()) {
-        if (tokens[0] == "LOGIN") {
-            DbLogic db("cal", "garry", "1111");
+    if (tokens.empty()) {
+        responseF("INVALID_REQUEST", client_socket);
+        return;
+    }
+    if (tokens[0] == "LOGIN") {
+        DbLogic db("cal", "garry", "1111");
 
-            std::string userId = db.getLoggedInUser(tokens[1], tokens[2]); 
+        std::string userId = db.getLoggedInUser(tokens[1], tokens[2]); 
 
-            if (!userId.empty()) {
-                std::string newToken = generateSessionToken();
-                activeSessions[newToken] = userId;
-                response = "LOGIN_SUCCESS " + newToken;
-            } else {
-                response = "EXCEPTION Bledny login lub haslo";
+        if (!findSessionTokenByUserId(userId).empty()) {
+            responseF("EXCEPTION Uzytkownik_zalogowany", client_socket);
+            return;
+        }
+
+        if (userId.empty()) {
+            responseF("EXCEPTION Bledny_login_lub_haslo", client_socket);
+            return;
+        }
+        std::string newToken = generateSessionToken();
+        activeSessions[newToken] = userId;
+        responseF("LOGIN_SUCCESS " + newToken, client_socket);
+        return;
+    }
+    if (activeSessions.find(tokens[0]) != activeSessions.end()) {
+        DbLogic db("cal", "garry", "1111");
+
+        if (tokens[1] == "LOGOUT") {
+            activeSessions.erase(tokens[0]);
+            responseF("LOGOUT_SUCCESS", client_socket);
+        } else if (tokens[1] == "ADD_EVENT") {
+            std::string userId = activeSessions.find(tokens[0])->second;
+
+            bool wasEvtAdded = db.addEvent(userId, tokens[2], tokens[3], tokens[4], tokens[5]);
+
+            if (!wasEvtAdded) {
+                responseF("EXCEPTION Dodanie_wydarzenia_nie_powiodlo_sie", client_socket);
+                return;
             }
-            
+            responseF("EVENT_ADDED", client_socket);
+        } else if (tokens[1] == "DELETE_EVENT") {
+            responseF("EVENT_DELETED", client_socket);
+        } else if (tokens[1] == "LIST_EVENTS") {
+            std::string res = db.getEvents();
+            if (res.empty()) {
+                responseF("NO_EVENTS", client_socket);
+            }
+            responseF(res, client_socket);
         } else {
-            if (activeSessions.find(tokens[0]) != activeSessions.end()) {
-                // Polaczenie z baza danych
-                DbLogic db("cal", "garry", "1111");
-
-                if (tokens[1] == "LOGOUT") {
-                    activeSessions.erase(tokens[0]);
-                    response = "LOGOUT_SUCCESS";
-                } else if (tokens[1] == "ADD_EVENT") {
-                    std::string userId = activeSessions.find(tokens[0])->second;
-
-                    bool wasEvtAdded = db.addEvent(userId, tokens[2], tokens[3], tokens[4], tokens[5]);
-
-                    if (!wasEvtAdded) {
-                        response = "EXCEPTION Dodanie wydarzenia nie powiodlo sie";
-                    } else {
-                        response = "EVENT_ADDED";
-                    }
-                } else if (tokens[1] == "DELETE_EVENT") {
-                    response = "EVENT_DELETED";
-                } else if (tokens[1] == "LIST_EVENTS") {
-                    response = db.getEvents();
-                    if (response.empty()) {
-                        response = "NO_EVENTS";
-                    }
-                } else {
-                    response = "UNKNOWN_COMMAND";
-                }
-            } else {
-                response = "NOT_AUTHENTICATED";
-            }
+            responseF("UNKNOWN_COMMAND", client_socket);
         }
     } else {
-        response = "INVALID_REQUEST";
+        responseF("NOT_AUTHENTICATED", client_socket);
     }
-
-    send(client_socket, response.c_str(), response.size(), 0);
-    close(client_socket);
 }
 
 int main() {
