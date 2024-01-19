@@ -26,9 +26,6 @@ void handle_client(int client_socket) {
     std::vector<std::string> tokens(std::istream_iterator<std::string>{iss},
                                     std::istream_iterator<std::string>{});
 
-    // Polaczenie z baza danych
-    DbLogic db("cal", "garry", "1111");
-
     if (!tokens.empty()) {
         if (tokens[0] == "LOGIN") {
             std::string userId = "1"; 
@@ -38,6 +35,9 @@ void handle_client(int client_socket) {
             
         } else {
             if (activeSessions.find(tokens[0]) != activeSessions.end()) {
+                // Polaczenie z baza danych
+                DbLogic db("cal", "garry", "1111");
+
                 if (tokens[1] == "LOGOUT") {
                     activeSessions.erase(tokens[0]);
                     response = "LOGOUT_SUCCESS";
@@ -54,7 +54,10 @@ void handle_client(int client_socket) {
                 } else if (tokens[1] == "DELETE_EVENT") {
                     response = "EVENT_DELETED";
                 } else if (tokens[1] == "LIST_EVENTS") {
-                    response = "EVENT_LIST";
+                    response = db.getEvents();
+                    if (response.empty()) {
+                        response = "NO_EVENTS";
+                    }
                 } else {
                     response = "UNKNOWN_COMMAND";
                 }

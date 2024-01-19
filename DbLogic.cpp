@@ -36,3 +36,23 @@ bool DbLogic::addEvent(const std::string& user_id, const std::string& title, con
         return false;
     }
 }
+
+std::string DbLogic::getEvents() {
+    std::stringstream ss;
+    try {
+        pqxx::work txn(*conn);
+        pqxx::result r = txn.exec("SELECT event_id, user_id, title, description, start_time, end_time FROM events");
+
+        for (auto row : r) {
+            ss << row["event_id"].as<std::string>() << " | "
+               << row["user_id"].as<std::string>() << " | "
+               << row["title"].as<std::string>() << " | "
+               << row["description"].as<std::string>() << " | "
+               << row["start_time"].as<std::string>() << " | "
+               << row["end_time"].as<std::string>() << "\n";
+        }
+    } catch (const std::exception &e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    }
+    return ss.str();
+}
