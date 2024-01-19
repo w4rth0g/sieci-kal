@@ -12,6 +12,8 @@ public:
     bool addEvent(const std::string& user_id, const std::string& title, const std::string& description, const std::string& start_time, const std::string& end_time);
 
     std::string getEvents();
+
+    std::string getLoggedInUser(std::string username, std::string password);
     
 private:
     std::unique_ptr<pqxx::connection> conn;

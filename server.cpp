@@ -28,10 +28,17 @@ void handle_client(int client_socket) {
 
     if (!tokens.empty()) {
         if (tokens[0] == "LOGIN") {
-            std::string userId = "1"; 
-            std::string newToken = generateSessionToken();
-            activeSessions[newToken] = userId;
-            response = "LOGIN_SUCCESS " + newToken;
+            DbLogic db("cal", "garry", "1111");
+
+            std::string userId = db.getLoggedInUser(tokens[1], tokens[2]); 
+
+            if (!userId.empty()) {
+                std::string newToken = generateSessionToken();
+                activeSessions[newToken] = userId;
+                response = "LOGIN_SUCCESS " + newToken;
+            } else {
+                response = "EXCEPTION Bledny login lub haslo";
+            }
             
         } else {
             if (activeSessions.find(tokens[0]) != activeSessions.end()) {
@@ -47,7 +54,7 @@ void handle_client(int client_socket) {
                     bool wasEvtAdded = db.addEvent(userId, tokens[2], tokens[3], tokens[4], tokens[5]);
 
                     if (!wasEvtAdded) {
-                        response = "EXCEPTION";
+                        response = "EXCEPTION Dodanie wydarzenia nie powiodlo sie";
                     } else {
                         response = "EVENT_ADDED";
                     }
