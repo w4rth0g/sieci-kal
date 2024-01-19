@@ -9,12 +9,14 @@ g++ -o server server.cpp DbLogic.cpp -pthread -lpqxx -lpq
 ### Wymagane zależności
 
 ```
-sudo apt-get install libmysqlcppconn-dev
+sudo apt install postgresql postgresql-contrib
+sudo apt-get install libpqxx-dev
 ```
 
 ### Instalowanie skryptu bazy danych
 
 ```
+sudo passwd postgres
 sudo su postgres
 psql -U postgres -q cal < ./database.sql
 ```
