@@ -8,6 +8,7 @@
 #include <iterator>
 #include <vector>
 #include <map>
+#include "DbLogic.h"
 
 std::map<std::string, std::string> activeSessions;
 
@@ -24,6 +25,9 @@ void handle_client(int client_socket) {
     std::istringstream iss(request);
     std::vector<std::string> tokens(std::istream_iterator<std::string>{iss},
                                     std::istream_iterator<std::string>{});
+
+    // Polaczenie z baza danych
+    DbLogic db("cal", "garry", "1111");
 
     if (!tokens.empty()) {
         if (tokens[0] == "LOGIN") {
