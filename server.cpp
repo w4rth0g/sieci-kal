@@ -31,7 +31,7 @@ void handle_client(int client_socket) {
 
     if (!tokens.empty()) {
         if (tokens[0] == "LOGIN") {
-            std::string userId = "1234"; 
+            std::string userId = "1"; 
             std::string newToken = generateSessionToken();
             activeSessions[newToken] = userId;
             response = "LOGIN_SUCCESS " + newToken;
@@ -42,7 +42,15 @@ void handle_client(int client_socket) {
                     activeSessions.erase(tokens[0]);
                     response = "LOGOUT_SUCCESS";
                 } else if (tokens[1] == "ADD_EVENT") {
-                    response = "EVENT_ADDED";
+                    std::string userId = activeSessions.find(tokens[0])->second;
+
+                    bool wasEvtAdded = db.addEvent(userId, tokens[2], tokens[3], tokens[4], tokens[5]);
+
+                    if (!wasEvtAdded) {
+                        response = "EXCEPTION";
+                    } else {
+                        response = "EVENT_ADDED";
+                    }
                 } else if (tokens[1] == "DELETE_EVENT") {
                     response = "EVENT_DELETED";
                 } else if (tokens[1] == "LIST_EVENTS") {
