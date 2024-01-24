@@ -79,6 +79,12 @@ void handle_client(int client_socket) {
             }
             responseF("EVENT_ADDED", client_socket);
         } else if (tokens[1] == "DELETE_EVENT") {
+            bool wasEvtDel = db.deleteEvent(tokens[2]);
+
+            if (!wasEvtDel) {
+                responseF("EXCEPTION Usuniecie_wydarzenia_nie_powiodlo_sie", client_socket);
+                return;
+            }
             responseF("EVENT_DELETED", client_socket);
         } else if (tokens[1] == "LIST_EVENTS") {
             std::string res = db.getEvents();

@@ -76,3 +76,20 @@ std::string DbLogic::getLoggedInUser(std::string username, std::string password)
 
     return userId;
 }
+
+bool DbLogic::deleteEvent(const std::string& event_id) {
+    try {
+        pqxx::work txn(*conn);
+        std::string query = "DELETE FROM events WHERE event_id = " + txn.quote(event_id) + ";";
+        txn.exec(query);
+        txn.commit();
+        return true;
+    } catch (const pqxx::sql_error& e) {
+        std::cerr << "SQL error: " << e.what() << std::endl;
+        return false;
+    } catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return false;
+    }
+}
+
