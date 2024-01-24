@@ -59,7 +59,7 @@ void handle_client(int client_socket) {
         }
         std::string newToken = generateSessionToken();
         activeSessions[newToken] = userId;
-        responseF("LOGIN_SUCCESS " + newToken, client_socket);
+        responseF("LOGIN_SUCCESS " + newToken + " " + userId, client_socket);
         return;
     }
     if (activeSessions.find(tokens[0]) != activeSessions.end()) {
