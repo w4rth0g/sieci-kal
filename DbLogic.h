@@ -15,6 +15,8 @@ public:
 
     std::string getLoggedInUser(std::string username, std::string password);
 
+    std::string getUserById(std::string userId);
+
     bool deleteEvent(const std::string& event_id);
     
 private:

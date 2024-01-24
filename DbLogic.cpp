@@ -77,6 +77,25 @@ std::string DbLogic::getLoggedInUser(std::string username, std::string password)
     return userId;
 }
 
+std::string DbLogic::getUserById(std::string userId) {
+    std::string username;
+    try {
+        pqxx::work txn(*conn);
+        pqxx::result r = txn.exec("SELECT username FROM users WHERE user_id = "
+                + txn.quote(userId));
+
+        if (r.size() == 1) {
+            username = r[0]["username"].as<std::string>();
+        } else {
+            username = "";
+        }
+    } catch (const std::exception &e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+    }
+
+    return username;
+}
+
 bool DbLogic::deleteEvent(const std::string& event_id) {
     try {
         pqxx::work txn(*conn);

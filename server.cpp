@@ -92,6 +92,14 @@ void handle_client(int client_socket) {
                 responseF("NO_EVENTS", client_socket);
             }
             responseF(res, client_socket);
+        } else if (tokens[1] == "GET_USER") {
+            std::string username = db.getUserById(tokens[2]);
+
+            if (username.empty()) {
+                responseF("EXCEPTION Uzytkownik_nie_istnieje", client_socket);
+                return;
+            }
+            responseF("USER " + username, client_socket);
         } else {
             responseF("UNKNOWN_COMMAND", client_socket);
         }
