@@ -10,17 +10,21 @@
 #include <map>
 #include "DbLogic.h"
 
+// mapa sluzaca do przechowywania aktywnych sesji zalogowanych uzytkownikow
 std::map<std::string, std::string> activeSessions;
 
+// generowanie tokena, prosty rand
 std::string generateSessionToken() {
     return std::to_string(rand());
 }
 
+// wysylanie odpowiedzi i zamykanie polaczenia
 void responseF(std::string resp, int client_socket) {
     send(client_socket, resp.c_str(), resp.size(), 0);
     close(client_socket);
 }
 
+//wyszukiwanie tokena w mapie aktywnych sesji
 std::string findSessionTokenByUserId(const std::string& userId) {
     for (const auto& pair : activeSessions) {
         if (pair.second == userId) {
@@ -30,11 +34,13 @@ std::string findSessionTokenByUserId(const std::string& userId) {
     return "";
 }
 
+// obsluga zdarzen
 void handle_client(int client_socket) {
     char buffer[1024] = {0};
     read(client_socket, buffer, 1024);
     std::string request = std::string(buffer);
 
+    // rozdzielenie zdarzenia spacjami z uzyciem stringstream
     std::istringstream iss(request);
     std::vector<std::string> tokens(std::istream_iterator<std::string>{iss},
                                     std::istream_iterator<std::string>{});
@@ -108,6 +114,7 @@ void handle_client(int client_socket) {
     }
 }
 
+// glowny kod serwera
 int main() {
     int server_fd, new_socket;
     struct sockaddr_in address;
@@ -122,6 +129,7 @@ int main() {
     bind(server_fd, (struct sockaddr *)&address, sizeof(address));
     listen(server_fd, 3);
 
+    // zastosowanie detach - kazdy watek obsluguje swoje zdarzenia
     while (true) {
         new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen);
         std::thread client_thread(handle_client, new_socket);
